@@ -16,9 +16,12 @@ alignment and weakly supervised learning.
 Use a virtual environment for notebook work so Jupyter uses the same packages
 as this project.
 
+### Virtual Environment
+
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 python -m ipykernel install --user --name cantonese-speech-ai --display-name "Cantonese Speech AI"
 ```
@@ -62,6 +65,20 @@ this project's `.venv` with the CUDA wheel:
 .\.venv\Scripts\Activate.ps1
 pip install --upgrade --force-reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128
 python -m ipykernel install --user --name cantonese-speech-ai --display-name "Cantonese Speech AI"
+```
+
+If you are setting up the project from scratch on a Windows machine with an
+NVIDIA GPU, the full command sequence is:
+
+```powershell
+cd D:\GitHub\Cantonese-Speech-AI
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install --upgrade --force-reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128
+python -m ipykernel install --user --name cantonese-speech-ai --display-name "Cantonese Speech AI"
+jupyter lab
 ```
 
 Restart JupyterLab, select the `Cantonese Speech AI` kernel, and run:
