@@ -15,6 +15,8 @@ For code-test preparation based on this project and the job duties, see
 [`docs/interview_preparation.md`](docs/interview_preparation.md).
 For focused code-test questions and model answers, see
 [`docs/code_test_questions_answers.md`](docs/code_test_questions_answers.md).
+For a repository-independent guide based directly on the advertised duties, see
+[`docs/job_duties_code_test_qa.md`](docs/job_duties_code_test_qa.md).
 
 ## Setup
 
