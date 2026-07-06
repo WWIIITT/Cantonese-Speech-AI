@@ -39,6 +39,9 @@ For the first ASR phase, use only the local Common Voice Yue dataset:
 
 ```text
 COMMON_VOICE_YUE_ROOT=Mozilla-HK-Speech-datasets/cv-corpus-26.0-2026-06-12/yue
+VECTORENGINE_API_KEY=your_api_key_here
+VECTORENGINE_BASE_URL=https://api.vectorengine.cn/v1
+WHISPER_MODEL=whisper-1
 ```
 
 ### Local NVIDIA GPU
@@ -201,7 +204,7 @@ reproducible, and focused on one experiment type.
 | --- | --- |
 | `test.ipynb` | Current environment check and GPU sanity check. |
 | `notebooks/01_data_discovery.ipynb` | Load Common Voice Yue TSVs, join clip durations, check missing audio, and inspect metadata distributions. |
-| `notebooks/02_asr_baseline.ipynb` | Prepare Common Voice-only train/dev/test subsets and baseline evaluation scaffolding. |
+| `notebooks/02_asr_baseline.ipynb` | Run a small Whisper API zero-shot baseline on Common Voice dev audio, calculate CER/WER, and save prediction CSVs. |
 | `notebooks/03_tone_modeling.ipynb` | Second-stage tone/Jyutping/prosody work after the ASR baseline is stable. |
 | `notebooks/04_dialect_adaptation.ipynb` | Second-stage accent adaptation using the Common Voice `accents` column. |
 | `notebooks/05_multimodal_fusion.ipynb` | Later-stage emotion-text fusion; Common Voice Yue has no native emotion labels. |
@@ -221,9 +224,10 @@ Recommended notebook conventions:
 
 ### 1. Cantonese ASR Baseline
 
-Start with a strong pretrained model instead of training from scratch. Good
-first baselines are Whisper fine-tuning for sequence-to-sequence ASR, or
-wav2vec 2.0 / HuBERT / WavLM fine-tuning with a CTC head.
+Start with a strong pretrained model instead of training from scratch. The
+first runnable baseline is Whisper API zero-shot transcription through the
+VectorEngine-compatible OpenAI API. This produces a prediction CSV for error
+analysis before local fine-tuning begins.
 
 Core steps:
 
@@ -232,9 +236,12 @@ Core steps:
    Cantonese-specific particles, numerals, English mixing, and optional
    traditional/simplified policy.
 3. Split by speaker or source to avoid leakage.
-4. Train a baseline and report CER, WER if word segmentation is defined, and
-   inference speed.
-5. Add noise and reverberation augmentation after the clean baseline is known.
+4. Run Whisper API on a small `dev` subset first, such as 3, 20, then 100
+   clips, and save `outputs/predictions/whisper_api_dev_<N>.csv`.
+5. Report CER, WER if word segmentation is defined, and inference speed.
+6. Move to local fine-tuning with Whisper, wav2vec 2.0, HuBERT, WavLM, or MMS
+   after the zero-shot baseline and error analysis are stable.
+7. Add noise and reverberation augmentation after the clean baseline is known.
 
 ### 2. Tone and Prosody Modeling
 

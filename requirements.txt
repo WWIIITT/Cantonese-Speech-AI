@@ -12,6 +12,7 @@ jiwer
 librosa
 soundfile
 python-dotenv
+openai
 matplotlib
 seaborn
 pycantonese
