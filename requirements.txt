@@ -1,0 +1,17 @@
+jupyterlab
+ipykernel
+numpy
+pandas
+scikit-learn
+torch
+torchaudio
+transformers
+datasets
+evaluate
+jiwer
+librosa
+soundfile
+python-dotenv
+matplotlib
+seaborn
+pycantonese

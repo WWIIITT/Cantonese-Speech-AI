@@ -11,6 +11,126 @@ speech AI: start with strong self-supervised speech models, add Cantonese tone
 and dialect knowledge, then extend the system toward multimodal emotion-text
 alignment and weakly supervised learning.
 
+## Setup
+
+Use a virtual environment for notebook work so Jupyter uses the same packages
+as this project.
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m ipykernel install --user --name cantonese-speech-ai --display-name "Cantonese Speech AI"
+```
+
+Then select the `Cantonese Speech AI` kernel in JupyterLab or VS Code.
+
+Start local JupyterLab from the project virtual environment:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+jupyter lab
+```
+
+Local paths can be configured by copying `.env.example` to `.env`. The `.env`
+file is intentionally ignored by git.
+
+For the first ASR phase, use only the local Common Voice Yue dataset:
+
+```text
+COMMON_VOICE_YUE_ROOT=Mozilla-HK-Speech-datasets/cv-corpus-26.0-2026-06-12/yue
+```
+
+### Local NVIDIA GPU
+
+JupyterLab uses the GPU only when the selected notebook kernel points to a
+Python environment with CUDA-enabled PyTorch installed.
+
+First confirm Windows can see the GPU:
+
+```powershell
+nvidia-smi
+```
+
+If PyTorch reports a CPU build, such as `2.12.1+cpu`, reinstall PyTorch inside
+this project's `.venv` with the CUDA wheel:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+pip install --upgrade --force-reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128
+python -m ipykernel install --user --name cantonese-speech-ai --display-name "Cantonese Speech AI"
+```
+
+Restart JupyterLab, select the `Cantonese Speech AI` kernel, and run:
+
+```python
+import torch
+
+print(torch.__version__)
+print(torch.version.cuda)
+print(torch.cuda.is_available())
+print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else "no cuda")
+```
+
+Expected on the tested local machine:
+
+```text
+2.11.0+cu128
+12.8
+True
+NVIDIA GeForce RTX 4060 Laptop GPU
+```
+
+### Google Colab
+
+Colab cannot read local Windows paths such as `D:\GitHub\...`. To run the
+notebooks in Colab, copy the whole project folder to Google Drive:
+
+```text
+/content/drive/MyDrive/Cantonese-Speech-AI
+```
+
+The folder must contain both:
+
+```text
+src/cantonese_speech_ai/
+Mozilla-HK-Speech-datasets/cv-corpus-26.0-2026-06-12/yue/
+```
+
+The first notebook cell will try to mount Google Drive and find this folder.
+If you use a different Drive path, add this before the first import cell:
+
+```python
+import os
+os.environ["PROJECT_ROOT"] = "/content/drive/MyDrive/your-folder-name"
+```
+
+## Project Structure
+
+```text
+.
+├── README.md
+├── requirements.txt
+├── test.ipynb
+├── notebooks/
+│   ├── 01_data_discovery.ipynb
+│   ├── 02_asr_baseline.ipynb
+│   ├── 03_tone_modeling.ipynb
+│   ├── 04_dialect_adaptation.ipynb
+│   ├── 05_multimodal_fusion.ipynb
+│   └── 06_error_analysis.ipynb
+├── src/cantonese_speech_ai/
+│   ├── audio.py
+│   ├── common_voice.py
+│   ├── config.py
+│   ├── datasets.py
+│   ├── metrics.py
+│   └── text.py
+└── tests/
+    ├── test_common_voice.py
+    └── test_helpers.py
+```
+
 ## System Framework
 
 ```text
@@ -56,29 +176,21 @@ Evaluation and analysis
 | Weakly supervised multimodal fusion | Generate pseudo labels, remove low-confidence examples, compare teacher-student agreement, and use adversarial alignment across domains. | Larger usable training set with cleaner labels and better domain robustness. |
 | R&D leadership | Use experiment tracking, reproducible notebooks, code review, shared baselines, mentoring sessions, and written experiment reports. | A collaborative research workflow that teammates can reproduce and extend. |
 
-## Dataset Candidates
+## Dataset Scope
 
-Use dataset licenses carefully. Cantonese data availability changes over time,
-so every dataset should be rechecked before download, redistribution, or model
-release.
+The first implementation phase uses only Mozilla Common Voice Yue from the
+local dataset folder. Keep the downloaded audio and TSV files out of git; the
+folder is ignored by `.gitignore`.
+
+PowerShell may display Cantonese TSV text as mojibake, but Python reads the
+files correctly with `encoding="utf-8"`.
 
 | Dataset | Use case | Notes |
 | --- | --- | --- |
-| [Mozilla Common Voice zh-HK](https://commonvoice.mozilla.org/zh-HK/datasets) / [Mozilla Data Collective](https://mozilladatacollective.com/) | Public Cantonese ASR starting point | Useful for baseline experiments and notebook prototyping. Check the current release version, hours, validated split, and license terms before training. |
-| [MDCC: A Multi-Domain Cantonese Corpus](https://arxiv.org/abs/2201.02419) | Hong Kong Cantonese ASR research | Described as a 73.6-hour corpus with read speech and transcripts. Use the paper and repository/access instructions to confirm availability and license. |
-| CantoMap / Cantonese MapTask-style corpus | Controlled dialogue or task-oriented speech | Reported as a 12.8-hour Cantonese MapTask corpus in dataset discussions, but a stable public source should be verified before depending on it. Treat as a candidate, not an assumed download. |
-| HKCanCor / Hong Kong Cantonese Corpus | Linguistic analysis and transcript normalization | Useful for Cantonese linguistic patterns, particles, and conversational text. Treat it as a text/linguistic resource unless audio access is separately confirmed. |
-| [WenetSpeech-Yue](https://arxiv.org/abs/2509.03959) | Large-scale Cantonese ASR research | Described as a 21,800-hour Cantonese corpus. Verify access path, license, and release status before planning experiments around it. |
-
-Additional sources to consider after the first baseline:
-
-- In-house Cantonese recordings with consent and clear data governance.
-- Public Hong Kong media/audio where speech, transcript, and redistribution
-  rights are explicitly allowed.
-- Synthetic or weak labels generated by teacher ASR models, filtered by
-  confidence and manual spot checks.
-- Noise datasets for augmentation, such as public environmental noise corpora,
-  if their licenses permit research use.
+| Mozilla Common Voice Yue `cv-corpus-26.0-2026-06-12/yue` | Primary ASR dataset | Use `train.tsv`, `dev.tsv`, `test.tsv`, `validated.tsv`, `clip_durations.tsv`, and `clips/*.mp3`. Local counts are train 7420, dev 5130, test 5130, validated 191477. |
+| [MDCC](https://arxiv.org/abs/2201.02419) | Future ASR expansion | Do not mix into the first baseline. Verify access and license later. |
+| HKCanCor / Hong Kong Cantonese Corpus | Future linguistic support | Treat as text/linguistic reference unless audio access is confirmed. |
+| [WenetSpeech-Yue](https://arxiv.org/abs/2509.03959) | Future large-scale ASR expansion | Verify release status, access path, and license before use. |
 
 ## Notebook Workflow
 
@@ -88,12 +200,12 @@ reproducible, and focused on one experiment type.
 | Notebook | Purpose |
 | --- | --- |
 | `test.ipynb` | Current environment check and GPU sanity check. |
-| `01_data_discovery.ipynb` | Record dataset links, licenses, metadata, audio duration, transcript format, and split strategy. |
-| `02_asr_baseline.ipynb` | Fine-tune or evaluate a Whisper/wav2vec-style baseline and report CER/WER. |
-| `03_tone_modeling.ipynb` | Build tone labels, extract pitch/F0 features, add tone-aware auxiliary objectives, and analyze tone errors. |
-| `04_dialect_adaptation.ipynb` | Train sparse adapters or LoRA modules, test accent embeddings, and compare soft-label transfer methods. |
-| `05_multimodal_fusion.ipynb` | Fuse acoustic emotion embeddings with text semantic embeddings using attention-based modules. |
-| `06_error_analysis.ipynb` | Break down errors by tone, speaker, dialect/accent, noise condition, and domain. |
+| `notebooks/01_data_discovery.ipynb` | Load Common Voice Yue TSVs, join clip durations, check missing audio, and inspect metadata distributions. |
+| `notebooks/02_asr_baseline.ipynb` | Prepare Common Voice-only train/dev/test subsets and baseline evaluation scaffolding. |
+| `notebooks/03_tone_modeling.ipynb` | Second-stage tone/Jyutping/prosody work after the ASR baseline is stable. |
+| `notebooks/04_dialect_adaptation.ipynb` | Second-stage accent adaptation using the Common Voice `accents` column. |
+| `notebooks/05_multimodal_fusion.ipynb` | Later-stage emotion-text fusion; Common Voice Yue has no native emotion labels. |
+| `notebooks/06_error_analysis.ipynb` | Load prediction CSVs and analyze CER/WER by accent, age, gender, duration, and sentence length. |
 
 Recommended notebook conventions:
 
@@ -252,5 +364,17 @@ Recommended team process:
 
 - `test.ipynb` contains a GPU environment check.
 - `README.md` defines the planned research framework and notebook roadmap.
-- Future notebooks and reusable modules should be added incrementally after the
-  first dataset audit.
+- `notebooks/` contains starter experiment notebooks.
+- `src/cantonese_speech_ai/` contains concise helper modules for config,
+  Common Voice TSV loading, datasets, audio, text normalization, and metrics.
+- `tests/` contains lightweight helper tests.
+- `Mozilla-HK-Speech-datasets/` is the ignored local Common Voice Yue dataset.
+
+## Verification
+
+Run these checks after changing helper code or notebooks:
+
+```powershell
+python -m unittest discover -s tests -v
+python -m compileall src
+```
