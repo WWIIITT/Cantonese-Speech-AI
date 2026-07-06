@@ -11,6 +11,11 @@ speech AI: start with strong self-supervised speech models, add Cantonese tone
 and dialect knowledge, then extend the system toward multimodal emotion-text
 alignment and weakly supervised learning.
 
+For code-test preparation based on this project and the job duties, see
+[`docs/interview_preparation.md`](docs/interview_preparation.md).
+For focused code-test questions and model answers, see
+[`docs/code_test_questions_answers.md`](docs/code_test_questions_answers.md).
+
 ## Setup
 
 Use a virtual environment for notebook work so Jupyter uses the same packages
